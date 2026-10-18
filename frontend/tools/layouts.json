@@ -1,0 +1,30 @@
+{
+  "layouts": {
+    "phone": [
+      { "key": "stats", "span": 12 },
+      { "key": "deadlines", "span": 7 },
+      { "key": "lessons", "span": 5 },
+      { "key": "marks", "span": 7, "h": 576 },
+      { "key": "activity", "span": 5 },
+      { "key": "news", "span": 12 }
+    ],
+    "tablet": [
+      { "key": "stats", "span": 12 },
+      { "key": "deadlines", "span": 7 },
+      { "key": "lessons", "span": 5 },
+      { "key": "marks", "span": 7 },
+      { "key": "activity", "span": 5 },
+      { "key": "news", "span": 12 }
+    ],
+    "desktop": [
+      { "key": "stats", "span": 12 },
+      { "key": "deadlines", "span": 4, "h": 456 },
+      { "key": "lessons", "span": 4, "h": 456 },
+      { "key": "marks", "span": 4, "h": 456 },
+      { "key": "activity", "span": 4 },
+      { "key": "news", "span": 12 },
+      { "key": "board", "span": 8 }
+    ]
+  },
+  "updated_at": "2026-09-24T19:40:54"
+}

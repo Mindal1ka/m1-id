@@ -1,0 +1,42 @@
+{
+	"name": "M1 ID — клієнт MyStat (Майстат)",
+	"short_name": "M1 ID",
+	"description": "M1 ID (М1 Айді) — швидкий клієнт MyStat для студентів IT STEP: розклад, домашка, оцінки, харчування й Telegram-бот в одному акаунті.",
+	"start_url": "/app",
+	"scope": "/",
+	"display": "standalone",
+	"orientation": "portrait-primary",
+	"background_color": "#0a0c10",
+	"theme_color": "#0a0c10",
+	"lang": "uk",
+	"categories": [
+		"education",
+		"productivity"
+	],
+	"icons": [
+		{
+			"src": "/icon.svg",
+			"sizes": "any",
+			"type": "image/svg+xml",
+			"purpose": "any"
+		},
+		{
+			"src": "/icon-192.png",
+			"sizes": "192x192",
+			"type": "image/png",
+			"purpose": "any"
+		},
+		{
+			"src": "/icon-512.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "any"
+		},
+		{
+			"src": "/maskable-512.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "maskable"
+		}
+	]
+}

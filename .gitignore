@@ -1,0 +1,29 @@
+# залежності
+node_modules/
+.venv/
+
+# python
+__pycache__/
+*.pyc
+
+# секрети — НІКОЛИ не комітити
+.env
+*.token
+token*.txt
+
+# генероване
+backend/.spec_cache/
+backend/.token_key
+backend/.jwt_key
+backend/*.tmp
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+backend/logs/
+frontend/build/
+frontend/.svelte-kit/
+dist/
+
+# Telegram-бот: ексклюзивний lock воркера
+backend/.tg_bot.lock

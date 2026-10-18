@@ -1,0 +1,632 @@
+/* Стилі моушн-hero лендінгу. Глобальні (елементи створює motion.ts),
+   тому всі класи з префіксом lh-. Палітра — та сама, що в Landing.svelte. */
+
+.lh-scroll {
+	--lh-bg: #0a0c10;
+	--lh-fg: #e9ecf4;
+	--lh-dim: #8b93a6;
+	--lh-stroke: #5d6480;
+	--lh-ac: #9d8cff;
+	position: relative;
+}
+
+.lh-stage {
+	box-sizing: border-box;
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	padding: 120px clamp(20px, 5vw, 72px) 72px;
+}
+
+/* кінематографічний режим: пінимо сцену, скріншот їде знизу під літери */
+html.lh-anim .lh-scroll {
+	height: 320vh;
+}
+html.lh-anim .lh-stage {
+	position: sticky;
+	top: 0;
+	height: 100vh;
+	height: 100svh;
+	overflow: hidden;
+	padding: 96px clamp(20px, 5vw, 72px) 72px;
+	justify-content: center;
+	touch-action: pan-y;
+	cursor: crosshair;
+}
+html.lh-anim .lh-title,
+html.lh-anim .lh-sub {
+	position: relative;
+	z-index: 2;
+}
+
+/* ── скріншот застосунку ── */
+.lh-shot {
+	margin-top: 56px;
+	width: min(1080px, 100%);
+	align-self: center;
+}
+/* ── підписи збоку від скріншота ── */
+.lh-shot {
+	position: relative;
+}
+.lh-cos {
+	list-style: none;
+	margin: 16px 0 0;
+	padding: 0;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+.lh-co {
+	max-width: 240px;
+	padding: 10px 14px;
+	background: rgba(10, 12, 16, 0.9);
+	border-left: 2px solid var(--lh-ac);
+	border-radius: 4px;
+	color: var(--lh-fg);
+	font-size: 14px;
+	line-height: 1.5;
+}
+.lh-co b {
+	color: var(--lh-ac);
+	font-size: 1.4em;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+}
+
+/* у кінематографічному режимі підписи виїжджають збоку, коли скріншот доїхав */
+html.lh-anim .lh-co {
+	opacity: 0;
+	transition:
+		opacity 0.5s ease,
+		transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+html.lh-anim .lh-c1 {
+	transform: translateX(-28px);
+}
+html.lh-anim .lh-c2,
+html.lh-anim .lh-c3 {
+	transform: translateX(28px);
+}
+html.lh-anim .lh-on .lh-co {
+	opacity: 1;
+	transform: none;
+}
+html.lh-anim .lh-on .lh-c3 {
+	transition-delay: 0.12s;
+}
+html.lh-anim .lh-on .lh-c2 {
+	transition-delay: 0.24s;
+}
+/* Широкий ПК і альбомний телефон: підписи ПОВНІСТЮ поза кадром, зліва й справа
+   (кадр звужений так, щоб по боках вмістились картки, — див. кінець файлу). */
+@media (min-width: 1101px), (max-height: 500px) {
+	html.lh-anim .lh-cos {
+		position: absolute;
+		inset: 0;
+		margin: 0;
+		display: block;
+	}
+	html.lh-anim .lh-co {
+		position: absolute;
+		width: min(240px, calc((100vw - var(--lh-shot-w)) / 2 - 44px));
+	}
+	html.lh-anim .lh-c1 {
+		right: calc(100% + 22px);
+		top: 18%;
+	}
+	html.lh-anim .lh-c3 {
+		left: calc(100% + 22px);
+		top: 14%;
+	}
+	html.lh-anim .lh-c2 {
+		left: calc(100% + 22px);
+		top: 52%;
+	}
+}
+/* Ноутбук/планшет (761–1100) і телефон: збоку місця немає — список під кадром */
+@media (max-width: 1100px) and (min-height: 501px) {
+	html.lh-anim .lh-cos {
+		position: absolute;
+		top: calc(100% + 16px);
+		left: 0;
+		right: 0;
+		margin: 0;
+		justify-content: center;
+		gap: 10px;
+	}
+	html.lh-anim .lh-co {
+		flex: 1 1 0;
+		max-width: 300px;
+	}
+	html.lh-anim .lh-c1,
+	html.lh-anim .lh-c2,
+	html.lh-anim .lh-c3 {
+		transform: translateY(12px);
+	}
+}
+@media (max-width: 760px) and (min-height: 501px) {
+	html.lh-anim .lh-cos {
+		flex-direction: column;
+		gap: 8px;
+	}
+	html.lh-anim .lh-co {
+		flex: none;
+		max-width: none;
+	}
+	.lh-co {
+		font-size: 13px;
+		padding: 8px 12px;
+	}
+}
+
+html.lh-anim .lh-shot {
+	position: absolute;
+	left: 50%;
+	top: 0;
+	margin: 0;
+	/* ширина обмежена й висотою екрана: на низьких/альбомних екранах кадр вміщається */
+	width: min(1080px, 86vw, calc((100svh - 150px) * 1.78));
+	transform-origin: 50% 0;
+	z-index: 1;
+	will-change: transform;
+	pointer-events: none;
+}
+.lh-shot-in {
+	margin: 0;
+	border-radius: 18px;
+	overflow: hidden;
+	border: 1px solid rgba(255, 255, 255, 0.09);
+	box-shadow: 0 40px 120px rgba(0, 0, 0, 0.55);
+	background: #161a23;
+}
+.lh-shot-in img {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+
+.lh-title {
+	font-family: var(--font-display);
+	font-weight: 900;
+	/* обмежено й шириною, й висотою: на широких низьких екранах 4 рядки вміщаються */
+	font-size: min(clamp(40px, 7.3vw, 140px), 13vh);
+	line-height: 1.02;
+	letter-spacing: -0.025em;
+	margin: 0;
+	color: var(--lh-fg);
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+.lh-line {
+	display: flex;
+	flex-wrap: wrap;
+	column-gap: 0.24em;
+	width: fit-content;
+	max-width: 100%;
+	position: relative;
+	will-change: transform;
+}
+
+.lh-row34 {
+	display: flex;
+	flex-wrap: wrap;
+	column-gap: 0.24em;
+	align-items: baseline;
+	max-width: 100%;
+}
+.lh-row34 .lh-line {
+	max-width: none;
+}
+/* рішення фіксує motion.ts: вміщається — один рядок без переносу,
+   ні (вузький екран) — «бути.» окремим рядком */
+.lh-row34.lh-inline {
+	flex-wrap: nowrap;
+}
+.lh-row34.lh-stack .lh-l4 {
+	flex-basis: 100%;
+}
+
+.lh-word {
+	display: inline-flex;
+	white-space: nowrap;
+}
+
+.lh-m {
+	display: inline-flex;
+	overflow: clip;
+	padding-block: 0.16em;
+	margin-block: -0.16em;
+}
+
+.lh-open .lh-m {
+	overflow: visible;
+}
+
+.lh-ch,
+.lh-ci {
+	display: inline-block;
+}
+
+.lh-ci {
+	will-change: transform;
+}
+
+.lh-l2 {
+	color: transparent;
+	-webkit-text-stroke: 1.5px var(--lh-stroke);
+}
+
+.lh-l2 .lh-ci {
+	color: inherit;
+}
+
+.lh-scan {
+	position: absolute;
+	top: -0.05em;
+	bottom: -0.05em;
+	left: 0;
+	width: 4px;
+	background: var(--lh-ac);
+	opacity: 0;
+	pointer-events: none;
+}
+
+.lh-slotw {
+	position: relative;
+}
+
+.lh-slot {
+	position: relative;
+	display: inline-block;
+	overflow: clip;
+	padding-block: 0.16em;
+	margin-block: -0.16em;
+	transition: width 0.22s cubic-bezier(0.2, 0.9, 0.1, 1);
+	white-space: nowrap;
+	vertical-align: top;
+}
+
+.lh-sw {
+	display: inline-block;
+	position: relative;
+	z-index: 1;
+}
+
+.lh-final .lh-sw {
+	color: var(--lh-ac);
+}
+
+.lh-strike {
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 56%;
+	height: 0.1em;
+	background: var(--lh-ac);
+	transform: scaleX(0);
+	transform-origin: left;
+	z-index: 2;
+}
+
+.lh-mark {
+	position: absolute;
+	inset: 0.2em 0 0.12em 0;
+	background: var(--lh-ac);
+	transform: scaleX(0);
+	transform-origin: left;
+	z-index: 3;
+}
+
+.lh-meas {
+	position: absolute;
+	visibility: hidden;
+	white-space: nowrap;
+	left: 0;
+	top: 0;
+	pointer-events: none;
+}
+
+.lh-sub {
+	margin: clamp(28px, 4vw, 48px) 0 0;
+	max-width: 31ch;
+	font-size: clamp(16px, 1.4vw, 20px);
+	line-height: 1.6;
+	color: var(--lh-dim);
+}
+
+.lh-sub b {
+	color: var(--lh-fg);
+	font-weight: 500;
+}
+
+/* ── шар ефектів і рекламне інтро ── */
+.lh-fx {
+	position: fixed;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	z-index: 70;
+}
+
+.lh-ad {
+	display: none;
+	position: fixed;
+	inset: 0;
+	z-index: 60;
+	overflow: hidden;
+	background: #0a0c10;
+	font-family: var(--font-display);
+}
+
+html.lh-ad-on .lh-ad {
+	display: block;
+}
+
+html.lh-lock,
+html.lh-lock body {
+	overflow: hidden;
+}
+
+.lh-ad .lh-sc {
+	position: absolute;
+	inset: 0;
+	overflow: hidden;
+	display: grid;
+	place-items: center;
+}
+
+.lh-ad .lh-t {
+	font-weight: 900;
+	line-height: 0.9;
+	letter-spacing: -0.035em;
+	text-align: center;
+	white-space: nowrap;
+}
+
+.lh-ad .lh-lt {
+	display: inline-block;
+}
+
+.lh-ad .lh-shape {
+	position: absolute;
+	pointer-events: none;
+}
+
+.lh-ad .lh-lbl {
+	position: absolute;
+	font-weight: 800;
+	font-size: clamp(20px, 4.6vw, 64px);
+	padding: 0.18em 0.45em 0.24em;
+	border-radius: 0.2em;
+	white-space: nowrap;
+}
+
+.lh-ad .lh-stack {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.04em;
+	/* «Харчування.» у Unbounded 900 — найширше слово; вміщається від 320px */
+	font-size: min(7.6vw, 13vh);
+}
+
+.lh-ad .lh-uline {
+	position: absolute;
+	left: -0.04em;
+	right: -0.04em;
+	bottom: -0.06em;
+	height: 0.16em;
+	transform-origin: left;
+	z-index: -1;
+}
+
+.lh-ad .lh-cursor {
+	position: absolute;
+	width: clamp(34px, 6vmin, 64px);
+	height: clamp(34px, 6vmin, 64px);
+	opacity: 0;
+	z-index: 2;
+}
+
+/* S5: іконка + слово у «слоті» на незмінному фоні */
+.lh-ad .lh-s5 {
+	display: flex;
+	align-items: center;
+	gap: 0.26em;
+	font-weight: 900;
+	font-size: min(12.5vw, 20vh);
+	line-height: 1;
+	letter-spacing: -0.035em;
+	color: #0a0c10;
+}
+
+.lh-ad .lh-s5-ic {
+	position: relative;
+	width: 0.78em;
+	height: 0.78em;
+	flex: none;
+}
+
+.lh-ad .lh-s5-i {
+	position: absolute;
+	inset: 0;
+}
+
+.lh-ad .lh-s5-bolt {
+	background: #0a0c10;
+	clip-path: polygon(62% 0, 12% 58%, 45% 58%, 34% 100%, 90% 40%, 56% 40%);
+}
+
+.lh-ad .lh-s5-off {
+	border: 0.1em solid #0a0c10;
+	border-radius: 50%;
+	box-sizing: border-box;
+}
+
+.lh-ad .lh-s5-slash {
+	position: absolute;
+	left: 50%;
+	top: -12%;
+	width: 0.1em;
+	height: 124%;
+	margin-left: -0.05em;
+	background: #0a0c10;
+	transform: rotate(45deg);
+}
+
+.lh-ad .lh-s5-star {
+	background: #f1efe8;
+	clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%);
+}
+
+.lh-ad .lh-s5-slot {
+	position: relative;
+	height: 1.12em;
+	overflow: clip;
+}
+
+.lh-ad .lh-s5-w {
+	position: absolute;
+	left: 0;
+	top: 0.06em;
+	white-space: nowrap;
+}
+
+.lh-ad .lh-fakebtn {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	translate: -50% -50%;
+	font-family: 'Golos Text Variable', var(--font-body);
+	font-weight: 600;
+	font-size: clamp(18px, 2.6vw, 34px);
+	padding: 0.7em 1.4em;
+	border-radius: 999px;
+}
+
+.lh-ad .lh-wrap {
+	white-space: normal;
+	text-wrap: balance;
+	max-width: 92vw;
+}
+
+.lh-skip {
+	position: fixed;
+	right: 16px;
+	bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+	z-index: 80;
+	background: rgba(10, 12, 16, 0.7);
+	color: #fff;
+	border: 1px solid rgba(255, 255, 255, 0.25);
+	border-radius: 999px;
+	padding: 10px 16px;
+	font: 500 13px 'Golos Text Variable', var(--font-body);
+	cursor: pointer;
+}
+
+/* ── початковий стан, поки моушн не стартував (клас ставить <head>-скрипт) ── */
+html.lh-anim .lh-l1 .lh-ch,
+html.lh-anim .lh-l3 .lh-ch,
+html.lh-anim .lh-l4 .lh-ch {
+	transform: translateY(118%);
+}
+/* до розбиття на літери (motion.ts ставить .lh-split) заголовок не показуємо */
+html.lh-anim .lh-title:not(.lh-split) {
+	visibility: hidden;
+}
+html.lh-anim .lh-l2 {
+	clip-path: inset(-30% 100% -30% 0);
+}
+html.lh-anim .lh-sw {
+	transform: translateY(118%);
+}
+html.lh-anim .lh-sub {
+	opacity: 0;
+}
+
+@media (max-width: 640px) {
+	.lh-title {
+		/* «яким має» вміщається в рядок навіть на 320px */
+		font-size: min(12.4vw, 13vh);
+	}
+	.lh-l2 {
+		-webkit-text-stroke-width: 1.2px;
+	}
+	/* телефон: коротший «пін» — менше гортати до наступного блоку */
+	html.lh-anim .lh-scroll {
+		height: 200svh;
+	}
+	html.lh-anim .lh-shot {
+		width: 92vw;
+	}
+	.lh-shot-in {
+		border-radius: 12px;
+	}
+}
+
+/* дуже низькі екрани (телефон в альбомній орієнтації) */
+@media (max-height: 500px) {
+	html.lh-anim .lh-stage {
+		padding-top: 72px;
+	}
+	.lh-sub {
+		margin-top: 14px;
+		font-size: 14px;
+		line-height: 1.45;
+		max-width: 46ch;
+	}
+}
+
+/* вертикальний телефон: мобільний скрін у «рамці телефона», під ним — підписи.
+   Стоїть останнім, щоб перебити загальні правила ширини кадру вище. */
+@media (max-width: 760px) and (min-height: 501px) {
+	html.lh-anim .lh-shot {
+		width: min(66vw, calc((100svh - 360px) * 0.462));
+	}
+	html.lh-anim .lh-shot-in {
+		border-radius: 26px;
+		border-width: 2px;
+	}
+	/* мобільного кадру ще немає — ПК-кадр, обрізаний під вертикальний екран */
+	html.lh-anim .lh-shot-in img.is-crop {
+		aspect-ratio: 9 / 19.5;
+		object-fit: cover;
+		object-position: 14% 0;
+	}
+	html.lh-anim .lh-cos {
+		width: min(92vw, 360px);
+		left: 50%;
+		right: auto;
+		translate: -50% 0;
+	}
+}
+
+/* Ширина кадру в кінематографічному режимі (змінна потрібна й для ширини підписів).
+   Широкий ПК: лишаємо по ~254px з кожного боку під картки підписів. */
+html.lh-anim {
+	--lh-shot-w: min(1080px, 86vw, calc((100svh - 150px) * 1.78));
+}
+@media (min-width: 1101px) {
+	html.lh-anim {
+		--lh-shot-w: min(
+			1080px,
+			calc(100vw - 2 * clamp(20px, 5vw, 72px) - 508px),
+			calc((100svh - 150px) * 1.78)
+		);
+	}
+}
+@media (min-width: 761px) and (max-width: 1100px) and (min-height: 501px) {
+	html.lh-anim {
+		/* місце під рядок підписів під кадром */
+		--lh-shot-w: min(86vw, calc((100svh - 330px) * 1.78));
+	}
+}
+@media (min-width: 761px), (max-height: 500px) {
+	html.lh-anim .lh-shot {
+		width: var(--lh-shot-w);
+	}
+}

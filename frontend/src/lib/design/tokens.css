@@ -1,0 +1,534 @@
+/* ============================================================
+   M1 ID · дизайн-система v2 «Clean»
+   Спокійні суцільні поверхні, тонкі рамки, чітка типографіка.
+   Скло — лише для навігації та шитів; Aurora — опційний ефект.
+
+   Два шари змінних:
+   1) legacy-змінні (--bg, --surface, --text, --accent, --glass-*) —
+      їх пише theme.svelte.ts; старі компоненти теж на них спираються;
+   2) семантичні токени (--color-*, --space-*, --text-*, --radius-*, …) —
+      використовуються новим UI-кітом ($lib/ui) і мапляться на шар 1,
+      тому всі теми й акценти працюють автоматично.
+   ============================================================ */
+
+:root {
+	color-scheme: dark;
+
+	/* ---------- шар 1: legacy (дефолти до першого theme.apply()) ---------- */
+	--bg: #0b0c0f;
+	--surface: #131519;
+	--surface-2: #1a1d23;
+	--text: #eceef2;
+	--text-dim: #9aa1ad;
+	--text-faint: #6f7684;
+
+	--accent: #9d8cff;
+	--accent-strong: #ab9dff;
+	--accent-soft: rgba(157, 140, 255, 0.16);
+	--cyan: #22d3ee;
+
+	--aur-1: #9d8cff;
+	--aur-2: #22d3ee;
+	--aur-3: #6c5cff;
+	--aur-blend: screen;
+	--aur-op: 0.4;
+
+	--scroll-thumb: #22262e;
+	--scroll-thumb-hover: #2e333d;
+	--amber: #f5a524;
+	--success: #22c55e;
+	--danger: #ef4444;
+
+	--glass-bg: var(--surface);
+	--glass-bg-hover: var(--surface-2);
+	--glass-border: rgba(255, 255, 255, 0.08);
+	--glass-blur: 16px;
+
+	/* плоскі rgba-поверхні (перезаписує theme.apply) */
+	--surface-a65: rgba(19, 21, 25, 0.65);
+	--surface-a86: rgba(19, 21, 25, 0.86);
+	--surface-a94: rgba(19, 21, 25, 0.94);
+	--bg-a85: rgba(11, 12, 15, 0.85);
+
+	/* ---------- шар 2: семантичні кольори ---------- */
+	--color-bg: var(--bg);
+	--color-surface: var(--surface);
+	--color-surface-2: var(--surface-2);
+	--color-elevated: var(--surface-2);
+	--color-hover: color-mix(in srgb, var(--text) 6%, transparent);
+	--color-pressed: color-mix(in srgb, var(--text) 10%, transparent);
+	--color-border: var(--glass-border);
+	--color-border-strong: color-mix(in srgb, var(--text) 18%, transparent);
+	--color-overlay: color-mix(in srgb, #000 55%, transparent);
+
+	--color-text: var(--text);
+	--color-text-muted: var(--text-dim);
+	--color-text-subtle: var(--text-faint);
+	--color-text-on-accent: #fff;
+
+	--color-accent: var(--accent);
+	--color-accent-hover: var(--accent-strong);
+	--color-accent-soft: var(--accent-soft);
+	--color-accent-text: color-mix(in srgb, var(--accent) 80%, var(--text));
+
+	--color-success: var(--success);
+	--color-warning: var(--amber);
+	--color-danger: var(--danger);
+	--color-info: var(--cyan);
+	--color-success-soft: color-mix(in srgb, var(--success) 14%, transparent);
+	--color-warning-soft: color-mix(in srgb, var(--amber) 16%, transparent);
+	--color-danger-soft: color-mix(in srgb, var(--danger) 14%, transparent);
+	--color-info-soft: color-mix(in srgb, var(--cyan) 14%, transparent);
+
+	/* оцінки за якістю (12-бальна): одна система на весь застосунок */
+	--grade-high: var(--success);
+	--grade-mid: var(--amber);
+	--grade-low: var(--danger);
+
+	/* ---------- відступи (база 4px) ---------- */
+	--space-0: 0;
+	--space-1: 4px;
+	--space-2: 8px;
+	--space-3: 12px;
+	--space-4: 16px;
+	--space-5: 20px;
+	--space-6: 24px;
+	--space-8: 32px;
+	--space-10: 40px;
+	--space-12: 48px;
+	--space-16: 64px;
+
+	/* ---------- типографіка ---------- */
+	--font-body: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+	--font-brand: 'Unbounded', var(--font-body);
+	/* заголовки — Unbounded, як в оригінальному дизайні (повернуто на прохання власника) */
+	--font-display: 'Unbounded', var(--font-body);
+	--font-mono: ui-monospace, 'Cascadia Code', 'SF Mono', Consolas, monospace;
+
+	--text-xs: 12px;
+	--text-sm: 13px;
+	--text-md: 14px;
+	--text-base: 15px;
+	--text-lg: 17px;
+	--text-xl: 20px;
+	--text-2xl: 24px;
+	--text-3xl: 30px;
+	--text-4xl: 38px;
+
+	--weight-regular: 400;
+	--weight-medium: 500;
+	--weight-semibold: 600;
+	--weight-bold: 700;
+
+	--leading-tight: 1.2;
+	--leading-normal: 1.5;
+
+	/* ---------- форма ---------- */
+	--radius-xs: 6px;
+	--radius-sm: 8px;
+	--radius-md: 12px;
+	--radius-lg: 16px;
+	--radius-xl: 20px;
+	--radius-full: 999px;
+
+	--shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+	--shadow-md: 0 4px 16px rgba(0, 0, 0, 0.28);
+	--shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.4);
+	--shadow-card: var(--shadow-sm);
+
+	--control-h-sm: 32px;
+	--control-h-md: 40px;
+	--control-h-lg: 48px;
+
+	/* ---------- шари ---------- */
+	--z-base: 1;
+	--z-sticky: 50;
+	--z-nav: 100;
+	--z-dropdown: 400;
+	--z-overlay: 800;
+	--z-modal: 810;
+	--z-popover: 900;
+	--z-toast: 1000;
+	--z-gate: 2000;
+
+	/* ---------- рух ---------- */
+	--dur-fast: 120ms;
+	--dur-base: 200ms;
+	--dur-slow: 320ms;
+	--ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+	--ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+	--ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+	/* ---------- макет ---------- */
+	--sidebar-w: 248px;
+	--topbar-h: 60px;
+	--bottomnav-h: 64px;
+	--content-max: 1280px;
+	--safe-top: env(safe-area-inset-top, 0px);
+	--safe-bottom: env(safe-area-inset-bottom, 0px);
+	/* брейкпойнти (довідково; у @media — літерали): sm 640 · md 900 · lg 1200 */
+}
+
+/* світла схема: тіні м'якші, overlay світліший */
+:root[data-scheme='light'] {
+	--shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+	--shadow-md: 0 4px 16px rgba(15, 23, 42, 0.08);
+	--shadow-lg: 0 16px 48px rgba(15, 23, 42, 0.14);
+	--color-overlay: color-mix(in srgb, #0f172a 35%, transparent);
+	--color-accent-text: color-mix(in srgb, var(--accent) 75%, #000);
+}
+
+/* М'яке перефарбування при зміні теми (~650ms html має .theming) */
+html.theming body,
+html.theming .glass,
+html.theming .btn,
+html.theming .chip {
+	transition:
+		background 0.45s ease,
+		background-color 0.45s ease,
+		color 0.45s ease,
+		border-color 0.45s ease,
+		box-shadow 0.45s ease !important;
+}
+
+/* ============ FX-частинки ============ */
+.fx-star {
+	position: fixed;
+	z-index: 9000;
+	pointer-events: none;
+	opacity: 0;
+	transform: translate(-50%, -50%) scale(0.2);
+	filter: drop-shadow(0 0 7px currentColor);
+	will-change: transform, opacity;
+	animation-name: fx-fly;
+	animation-timing-function: cubic-bezier(0.16, 0.72, 0.34, 1);
+	animation-fill-mode: forwards;
+}
+
+.fx-star svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+@keyframes fx-fly {
+	0% {
+		opacity: 0;
+		transform: translate(-50%, -50%) scale(0.2) rotate(0deg);
+	}
+	12% {
+		opacity: 1;
+	}
+	75% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+		transform: translate(calc(-50% + var(--ex, 60px)), calc(-50% + var(--ey, 20px)))
+			scale(0.08) rotate(var(--rot, 90deg));
+	}
+}
+
+/* ============ база ============ */
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+	-webkit-tap-highlight-color: transparent;
+}
+
+html {
+	background: var(--color-bg);
+	/* PWA-моноліт: без «резинки» overscroll на рівні сторінки */
+	overscroll-behavior-y: none;
+}
+
+body {
+	min-height: 100dvh;
+	font-family: var(--font-body);
+	font-size: var(--text-base);
+	line-height: var(--leading-normal);
+	color: var(--color-text);
+	/* цифри однакової ширини: оцінки/час не «стрибають» */
+	font-variant-numeric: tabular-nums;
+	font-feature-settings: 'cv11', 'ss01';
+	background: var(--color-bg);
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	overflow-x: hidden;
+	/* нативний ритм тапів: без double-tap-zoom і затримки 300мс */
+	touch-action: manipulation;
+}
+
+::selection {
+	background: var(--color-accent-soft);
+	color: var(--color-text);
+}
+
+:focus-visible {
+	outline: 2px solid var(--color-accent);
+	outline-offset: 2px;
+	border-radius: var(--radius-sm);
+}
+
+a {
+	color: var(--color-accent-text);
+}
+
+button:disabled {
+	cursor: not-allowed;
+}
+
+/* iOS масштабує сторінку при фокусі в полі з font-size < 16px */
+@media (max-width: 640px) {
+	input:not([type='checkbox']):not([type='radio']),
+	select,
+	textarea {
+		font-size: max(16px, 1em) !important;
+	}
+}
+
+::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+}
+::-webkit-scrollbar-track {
+	background: transparent;
+}
+::-webkit-scrollbar-thumb {
+	background: var(--scroll-thumb);
+	border-radius: 8px;
+	border: 2px solid var(--color-bg);
+}
+::-webkit-scrollbar-thumb:hover {
+	background: var(--scroll-thumb-hover);
+}
+
+/* ============ типографіка ============ */
+
+/* як в оригінальному дизайні: Unbounded 700 для h1–h3 */
+h1,
+h2,
+h3 {
+	font-family: var(--font-display);
+	font-weight: 700;
+	line-height: 1.15;
+	letter-spacing: -0.01em;
+	color: var(--color-text);
+}
+
+h4 {
+	font-family: var(--font-body);
+	font-weight: var(--weight-semibold);
+	line-height: var(--leading-tight);
+	color: var(--color-text);
+}
+
+.brand-font {
+	font-family: var(--font-brand);
+	letter-spacing: -0.01em;
+}
+
+.accent-text {
+	color: var(--color-accent-text);
+}
+.text-dim {
+	color: var(--color-text-muted);
+}
+.text-faint {
+	color: var(--color-text-subtle);
+}
+
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+/* ============ legacy-класи (старі екрани) у новому стилі ============
+   .glass більше НЕ скло: суцільна поверхня з тонкою рамкою.
+   Справжнє скло — клас .frosted (навігація, шити). */
+
+.glass {
+	background: var(--color-surface);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow-card);
+	transition:
+		background var(--dur-base) ease,
+		border-color var(--dur-base) ease;
+}
+
+.glass:hover {
+	border-color: color-mix(in srgb, var(--color-accent) 28%, var(--color-border));
+}
+
+/* акцентна обвідка при наведенні вимкнена (Налаштування → «Підсвітка карток») */
+html.no-hover-glow .glass:hover {
+	border-color: var(--color-border);
+}
+
+.frosted {
+	background: color-mix(in srgb, var(--color-bg) 78%, transparent);
+	/* Префікс ПЕРШИМ, стандарт ОСТАННІМ: деякі мініфікатори «залишають
+	 останнє» (див. vite.config cssPrefixGuard). */
+	-webkit-backdrop-filter: saturate(1.6) blur(calc(var(--glass-blur) + 0px));
+	backdrop-filter: saturate(1.6) blur(var(--glass-blur));
+}
+
+.chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 3px 10px;
+	font-size: var(--text-xs);
+	font-weight: var(--weight-medium);
+	color: var(--color-text-muted);
+	background: var(--color-surface-2);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-full);
+}
+
+.btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	min-height: var(--control-h-md);
+	padding: 0 16px;
+	font: inherit;
+	font-size: var(--text-md);
+	font-weight: var(--weight-semibold);
+	color: var(--color-text);
+	background: var(--color-surface-2);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-md);
+	cursor: pointer;
+	user-select: none;
+	transition:
+		background var(--dur-fast) ease,
+		border-color var(--dur-fast) ease,
+		transform var(--dur-fast) ease;
+}
+
+.btn:hover {
+	background: color-mix(in srgb, var(--color-surface-2) 70%, var(--color-text) 6%);
+	border-color: var(--color-border-strong);
+}
+.btn:active {
+	transform: scale(0.98);
+}
+
+.btn-primary {
+	background: var(--color-accent);
+	border-color: transparent;
+	color: var(--color-text-on-accent);
+}
+.btn-primary:hover {
+	background: var(--color-accent-hover);
+	border-color: transparent;
+}
+
+.btn:disabled,
+.btn[aria-disabled='true'] {
+	opacity: 0.45;
+	cursor: not-allowed;
+	transform: none !important;
+	box-shadow: none !important;
+}
+
+/* ============ статусні точки ============ */
+
+.dot {
+	width: 8px;
+	height: 8px;
+	flex-shrink: 0;
+	border-radius: 50%;
+	position: relative;
+}
+.dot::after {
+	content: '';
+	position: absolute;
+	inset: -4px;
+	border-radius: 50%;
+	animation: pulse-ring 2s ease-out infinite;
+}
+.dot--online {
+	background: var(--color-success);
+}
+.dot--online::after {
+	border: 1.5px solid color-mix(in srgb, var(--color-success) 50%, transparent);
+}
+.dot--offline {
+	background: var(--color-danger);
+}
+.dot--offline::after {
+	border: 1.5px solid color-mix(in srgb, var(--color-danger) 35%, transparent);
+	animation: none;
+}
+
+@keyframes pulse-ring {
+	0% {
+		transform: scale(0.6);
+		opacity: 1;
+	}
+	80%,
+	100% {
+		transform: scale(1.7);
+		opacity: 0;
+	}
+}
+
+/* ============ скелетони ============ */
+
+.skeleton {
+	background: var(--color-surface-2);
+	border-radius: var(--radius-sm);
+	animation: sk-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes sk-pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.45;
+	}
+}
+
+.spin {
+	animation: m1-rot 0.9s linear infinite;
+}
+
+@keyframes m1-rot {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+/* ============ доступність: менше руху ============ */
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.001s !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.001s !important;
+	}
+}
+
+/* ============ анімація появи елементів ============
+   Поява карток/рядків — ЄДИНИЙ JS-двигун у $lib/motion (autoEnter у +layout
+   + use:stagger у контейнерах). Глобальну CSS-появу з nth-child прибрано:
+   вона рахувала лише 13 елементів (решта з'являлась разом) і билася з WAAPI.
+   Стиль появи (html[data-anim] = rise | fade | slide | pop | off) читає двигун. */

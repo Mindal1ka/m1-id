@@ -1,0 +1,9 @@
+# M1 ID — індексуємо лендінг; застосунок, API та особисті сторінки — ні
+User-agent: *
+Allow: /
+Disallow: /app
+Disallow: /accounts
+Disallow: /reset
+Disallow: /api/
+
+Sitemap: https://m1id.xyz/sitemap.xml

@@ -1,0 +1,18 @@
+{
+  "id": "streak-note",
+  "name": "Нотатки-стрики",
+  "version": "1.0.0",
+  "author": "M1 ID",
+  "description": "Мінімальний приклад: своя вкладка з нотатками (storage) і TG-команда.",
+  "permissions": ["storage", "notify:telegram"],
+  "tg_commands": [
+    { "command": "notes", "description": "Мої нотатки (плагін streak-note)" }
+  ],
+  "hooks": {
+    "on_command": true,
+    "on_ui": true
+  },
+  "entry": "plugin.py",
+  "storage_limit_kb": 8,
+  "settings_schema": []
+}

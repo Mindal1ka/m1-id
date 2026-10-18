@@ -1,0 +1,125 @@
+/* ============================================================
+   M1 ID · motion v3 — глобальні стилі руху
+   (прожектор, шимер, мікровзаємодії). View Transitions не використовуються:
+   перемикання вкладок — enterContent() на живому DOM.
+   ============================================================ */
+
+/* ---------- прожектор (action `spotlight`) ----------
+   Одна пляма-елемент, що рухається transform-ом (без перемальовування). */
+
+.spotlight {
+	position: relative;
+	isolation: isolate;
+	/* без overflow:hidden: пляму обрізає .spotlight-layer, а поповери й
+	   кільця фокуса не повинні обрізатися */
+}
+/* шар-обрізка: не впливає на область прокрутки картки */
+.spotlight-layer {
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	overflow: hidden;
+	border-radius: inherit;
+	pointer-events: none;
+}
+.spotlight-glow {
+	position: absolute;
+	left: -180px;
+	top: -180px;
+	width: 360px;
+	height: 360px;
+	z-index: -1;
+	border-radius: 50%;
+	pointer-events: none;
+	background: radial-gradient(
+		closest-side,
+		color-mix(in srgb, var(--color-accent) 12%, transparent),
+		transparent
+	);
+	opacity: 0;
+	transition: opacity var(--dur-slow) ease;
+	will-change: transform;
+}
+.spotlight:hover > .spotlight-layer > .spotlight-glow {
+	opacity: 1;
+}
+html[data-anim='off'] .spotlight-glow,
+html[data-perf='lite'] .spotlight-glow {
+	display: none;
+}
+
+/* ---------- шимер для скелетонів ---------- */
+
+.shimmer {
+	position: relative;
+	overflow: hidden;
+}
+.shimmer::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	transform: translateX(-100%);
+	background: linear-gradient(
+		90deg,
+		transparent,
+		color-mix(in srgb, var(--color-text) 7%, transparent),
+		transparent
+	);
+	animation: m1-shimmer 1.5s ease-in-out infinite;
+}
+@keyframes m1-shimmer {
+	to { transform: translateX(100%); }
+}
+
+/* ---------- утиліти ---------- */
+
+/* плавні ховери для інтерактивних карток */
+.lift {
+	transition:
+		transform 420ms var(--ease-spring),
+		box-shadow var(--dur-base) ease,
+		border-color var(--dur-base) ease;
+}
+@media (hover: hover) and (pointer: fine) {
+	.lift:hover {
+		transform: translateY(-2px);
+		box-shadow: var(--shadow-md);
+	}
+}
+
+/* мерехтіння оновленого значення */
+@keyframes m1-flash {
+	0% { background-color: var(--color-accent-soft); }
+	100% { background-color: transparent; }
+}
+.flash-update {
+	animation: m1-flash 900ms ease-out;
+}
+
+/* «дихання» активного статусу (зараз іде пара тощо) */
+@keyframes m1-breathe {
+	0%, 100% { opacity: 1; transform: scale(1); }
+	50% { opacity: 0.55; transform: scale(0.86); }
+}
+.breathe {
+	animation: m1-breathe 2.2s ease-in-out infinite;
+}
+
+html[data-anim='off'] :is(.shimmer::after, .breathe, .flash-update) {
+	animation: none;
+}
+html[data-anim='off'] .lift:hover {
+	transform: none;
+}
+
+/* ============ рівень продуктивності «lite» ============
+   Рух лишається, зникають лише дорогі ефекти: blur-фільтри,
+   backdrop-filter (скло → суцільний фон), нескінченні декоративні цикли. */
+html[data-perf='lite'] .frosted {
+	-webkit-backdrop-filter: none;
+	backdrop-filter: none;
+	background: var(--color-bg);
+}
+html[data-perf='lite'] .shimmer::after {
+	animation-duration: 2.4s;
+}

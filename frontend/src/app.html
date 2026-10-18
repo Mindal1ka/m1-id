@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="uk">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="manifest" href="%sveltekit.assets%/manifest.webmanifest" />
+		<meta name="theme-color" content="#0a0c10" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+		<link rel="apple-touch-icon" href="%sveltekit.assets%/icon-192.png" />
+		<script>
+			// Без блимання: схема і фон виставляються до першого малювання
+			(function () {
+				try {
+					var m = (JSON.parse(localStorage.getItem('m1id.theme.v1')) || {}).mode;
+					var bg = m === 'light' ? '#f5f6f8' : m === 'neon' ? '#07060c' : '#0b0c0f';
+					var s = m === 'light' ? 'light' : 'dark';
+					var d = document.documentElement;
+					d.dataset.scheme = s;
+					d.style.colorScheme = s;
+					d.style.backgroundColor = bg;
+					var t = document.querySelector('meta[name="theme-color"]');
+					if (t) t.setAttribute('content', bg);
+				} catch (e) {}
+				// Рівень продуктивності анімацій — один раз до першого кадру
+				// (дзеркало staticLite() з $lib/motion; посеред сесії не змінюється)
+				try {
+					var p = localStorage.getItem('m1id.perf');
+					if (p !== 'full' && p !== 'lite') {
+						var n = navigator, mem = n.deviceMemory || 8, cores = n.hardwareConcurrency || 8;
+						p = (n.connection && n.connection.saveData) || mem <= 2 || cores <= 2 || (mem <= 4 && cores <= 4) ? 'lite' : 'full';
+					}
+					document.documentElement.dataset.perf = p;
+				} catch (e) {}
+			})();
+		</script>
+		%sveltekit.head%
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents">%sveltekit.body%</div>
+	</body>
+</html>

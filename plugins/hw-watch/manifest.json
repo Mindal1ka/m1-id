@@ -1,0 +1,20 @@
+{
+  "id": "hw-watch",
+  "name": "ДЗ-вартовий",
+  "version": "1.0.0",
+  "author": "M1 ID",
+  "description": "Лічильник невиконаних домашок і сповіщення про дедлайни.",
+  "permissions": ["homework:read", "notify:telegram", "storage"],
+  "hooks": {
+    "on_event": true,
+    "on_ui": true
+  },
+  "entry": "plugin.py",
+  "storage_limit_kb": 16,
+  "settings_schema": [
+    { "key": "hours_before", "type": "number", "default": 24,
+      "label": "Сповіщати за N годин до дедлайну" },
+    { "key": "prefix", "type": "text", "default": "📚",
+      "label": "Префікс у повідомленні" }
+  ]
+}
