@@ -317,7 +317,11 @@ class AppStore {
 			api.shop(accountId, false).then((v) => {
 				slot.shop = v;
 				slot.ts.shop = Date.now();
-			})
+			}),
+			// «Останні нарахування»: раніше стрічка бралась один раз і жила
+			// в кеші вічно (в т.ч. у localStorage) — нові нарахування
+			// з'являлись лише після ручного «Оновити»
+			this.activityRefresh(accountId)
 		];
 		const out = await Promise.allSettled(jobs);
 		this.persist(accountId);
@@ -499,6 +503,25 @@ class AppStore {
 		};
 		this.persist(accountId);
 		return slot.activity;
+	}
+
+	/** Фонове оновлення стрічки: свіжа 1-ша сторінка зливається з уже
+	 *  завантаженими (нові зверху, без дублів за id); глибші сторінки,
+	 *  які юзер підгрузив скролом, не чіпаємо. Немає кешу — як activityFirst. */
+	async activityRefresh(accountId: number): Promise<void> {
+		const slot = this.slot(accountId);
+		const act = slot.activity;
+		if (!act) {
+			await this.activityFirst(accountId);
+			return;
+		}
+		const p = await api.activity(accountId, 1);
+		const fresh = new Set(p.items.map((i) => i.id));
+		const rest = act.items.filter((i) => !fresh.has(i.id));
+		act.items = [...p.items, ...rest];
+		// ще не гортали далі 1-ї сторінки → has_more бере свіжа відповідь
+		if (act.page <= 1) act.has_more = p.has_more;
+		this.persist(accountId);
 	}
 
 	async activityNext(accountId: number): Promise<void> {

@@ -653,7 +653,7 @@
 			</h2>
 			{#if d.today_lessons.length}
 				{@const hasMarks = d.today_lessons.some(
-					(l) => l.mark != null || (l.was === 0 && lessonOver(l))
+					(l) => l.mark != null || l.not_allowed || (l.was === 0 && lessonOver(l))
 				)}
 				<!-- hasMarks: слот під оцінки вмикається лише коли є що показати,
 					тоді ВЕСЬ віджет вирівнюється під нього; без оцінок час — впритул праворуч -->
@@ -698,7 +698,9 @@
 							{#if hasMarks}
 								<!-- слот однаковий для всіх рядків => час не скаче між рядками -->
 								<span class="les-slot">
-									{#if l.was === 0 && lessonOver(l)}
+									{#if l.not_allowed}
+										<span class="nk" title="Не допущено">н/д</span>
+									{:else if l.was === 0 && lessonOver(l)}
 										<span class="nk" title="Не був">Н</span>
 									{/if}
 									{#if l.mark != null}

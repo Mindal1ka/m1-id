@@ -19,7 +19,7 @@
 	import { showToast } from '$lib/stores/toast.svelte';
 	import Spinner from '$lib/ui/Spinner.svelte';
 	import { safeUrl } from '$lib/sanitize';
-	import { cleanTeacher } from '$lib/app/helpers';
+	import { cleanTeacher, hwKindTag } from '$lib/app/helpers';
 	import M1LinkModal from './M1LinkModal.svelte';
 	import FileViewerModal from './FileViewerModal.svelte';
 	import { stagger, pressable, blurFade, shake, AnimatedNumber } from '$lib/motion';
@@ -314,12 +314,14 @@
 				>
 				<div class="chips">
 					<span class="chip st">{card.status === 6 && (!card.status_label || card.status_label === '?') ? 'Прострочено' : card.status_label}</span>
-					{#if card.is_test}<span class="chip">тест</span>{/if}
+					{#if hwKindTag(card.kind)}<span class="chip">{hwKindTag(card.kind).toLowerCase()}</span>{/if}
 					{#if card.mark !== null && card.mark !== ''}
 						<span class="chip mark">оцінка {card.mark}</span>
 					{/if}
-					{#if card.coins}
-						<span class="chip coins"><Coins size={13} /> <AnimatedNumber value={Number(card.coins) || 0} duration={700} /></span>
+					{#if card.late_penalty}
+						<span class="chip coins" title="Дедлайн давно минув — здача коштує монети">
+							<Coins size={13} /> −<AnimatedNumber value={Number(card.late_penalty) || 0} duration={700} />
+						</span>
 					{/if}
 				</div>
 
@@ -416,6 +418,9 @@
 				{#if card.status !== 1 && card.status !== 2}
 					<button class="btn primary" use:pressable onclick={() => onsubmitrequest('submit')}>
 						<Send size={16} /> Здати роботу
+						{#if card.late_penalty}
+							<span class="cost" title="Дедлайн давно минув — здача коштує монети">−{card.late_penalty} <Coins size={13} /></span>
+						{/if}
 					</button>
 				{:else if card.status === 1}
 					<button
@@ -429,6 +434,7 @@
 						{#key armResub}<span class="lbl" in:blurFade={{ duration: 220, amount: 4, y: 5 }}
 								>{armResub ? 'Точно перездати?' : 'Перездати'}</span
 							>{/key}
+						<span class="cost" title="Запит на перездачу коштує монети">−{card.retake_cost ?? 2} <Coins size={13} /></span>
 					</button>
 				{/if}
 
@@ -578,6 +584,18 @@
 	.chip.mark { color: var(--amber, #ffb454); font-weight: 600; }
 	.chip.st { color: var(--text); border: 1px solid var(--surface-2); }
 	.chip.coins { color: var(--amber, #ffb454); }
+	.cost {
+		display: inline-flex;
+		align-items: center;
+		gap: 3px;
+		margin-left: 6px;
+		padding: 1px 7px;
+		border-radius: 999px;
+		font-size: 12px;
+		font-weight: 600;
+		color: var(--amber, #ffb454);
+		background: color-mix(in srgb, var(--amber, #ffb454) 14%, transparent);
+	}
 
 	.teacher {
 		display: flex;
@@ -796,10 +814,18 @@
 	.sk-line.w60 { width: 60%; }
 	.sk-line.w80 { width: 80%; }
 
+	/* Нижня панель (≤900px): модалка центрується у вільній зоні над нею. */
+	@media (max-width: 900px) {
+		.panel {
+			top: calc((100dvh - var(--nav-total, 0px)) / 2);
+			max-height: calc(100dvh - var(--nav-total, 0px) - 24px);
+		}
+	}
+
 	@media (max-width: 640px) {
 		.panel {
 			width: min(560px, 100vw - 24px);
-			max-height: 86dvh;
+			max-height: calc(100dvh - var(--nav-total, 0px) - 20px);
 		}
 	}
 

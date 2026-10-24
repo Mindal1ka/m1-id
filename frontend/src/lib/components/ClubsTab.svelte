@@ -8,10 +8,12 @@
 	import { flip } from 'svelte/animate';
 	import { AnimatedNumber, blurFade, pop, pressable, spotlight, springIn, stagger } from '$lib/motion';
 
-	let { account_id, refreshTick = 0 }: {
+	let { account_id, refreshTick = 0, dataTick = 0 }: {
 		account_id: number;
 		/** Тик авто/ручного оновлення з +page: змінився → перечитуємо. */
 		refreshTick?: number;
+		/** Тик фонового оновлення (5 хв): тихо перечитуємо за TTL бекенда. */
+		dataTick?: number;
 	} = $props();
 
 	let data = $state<ClubsView | null>(null);
@@ -61,6 +63,13 @@
 
 	$effect(() => {
 		if (refreshTick > 0) void load(true);
+	});
+	// Фонове оновлення за TTL бекенда (тик +page кожні 5 хв): без скелета,
+	// бекенд сам вирішує, чи ходити в mapi. Помилка — мовчки, лишаються старі дані.
+	$effect(() => {
+		if (dataTick > 0) {
+			void api.clubs(account_id, false).then((v) => (data = v)).catch(() => {});
+		}
 	});
 
 	/** Придбати абонемент клуба (money-операція!). */

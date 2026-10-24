@@ -78,6 +78,12 @@ async def _link_with_token(db: Session, user: User,
         raise ApiError(502, "mystat_unavailable", "__all__",
                        "mystat_network_error") from exc
 
+    # батьківський акаунт (profile=relative): дані лежать у childs[], а X-UserId
+    # = logbook_id дитини — M1 ID це не підтримує (див. MYSTAT_API.md §17)
+    if me.get("profile") == "relative":
+        raise ApiError(403, "relative_not_supported", "login",
+                       "parent_accounts_not_supported")
+
     norm = ms.parse_me(me)
     existing = (db.query(MystatAccount)
                 .filter(MystatAccount.user_id == user.id,

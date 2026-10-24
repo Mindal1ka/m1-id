@@ -3,11 +3,12 @@
 	import { flip } from 'svelte/animate';
 	import { cubicOut } from 'svelte/easing';
 	import { springIn, blurFade, shake, pop, pressable, motionOK } from '$lib/motion';
-	import { FileText, FileUp, Paperclip, Send, X, Check, Settings2, FileArchive, Link2, Code2, Play, Palette, Cloud, Globe } from '@lucide/svelte';
+	import { Coins, FileText, FileUp, Paperclip, Send, X, Check, Settings2, FileArchive, Link2, Code2, Play, Palette, Cloud, Globe } from '@lucide/svelte';
 	import { api, type HwItem } from '$lib/api/client';
 	import { friendlyError } from '$lib/errors';
 	import { fx } from '$lib/fx.svelte';
 	import { safeUrl } from '$lib/sanitize';
+	import { hwKindTag } from '$lib/app/helpers';
 
 	let {
 		open = false,
@@ -26,6 +27,12 @@
 	} = $props();
 
 	const MAX_FILE = 25 * 1024 * 1024;
+
+	// ціна здачі, як у офіційному клієнті: −2 за перездачу виконаного ДЗ,
+	// −20 за здачу з дедлайном, що минув пів року тому (hw.late_penalty)
+	const cost = $derived(
+		!hw ? 0 : mode === 'resubmit' ? (hw.retake_cost ?? 2) : (hw.late_penalty ?? 0)
+	);
 
 	let comment = $state('');
 	let picked: File[] = $state([]);
@@ -234,7 +241,7 @@
 
 		<div class="brief">
 			<b>{hw.title}</b>
-			<span class="text-dim small">{hw.subject}{#if hw.is_test} · тест{/if}</span>
+			<span class="text-dim small">{hw.subject}{#if hwKindTag(hw.kind)} · {hwKindTag(hw.kind).toLowerCase()}{/if}</span>
 			<div class="brief-chips">
 				{#if hw.overdue_days}
 					<span class="due-chip late">Прострочено: {hw.overdue_days} дн.</span>
@@ -242,6 +249,11 @@
 					<span class="due-chip">Дедлайн: {fmtDate(hw.due)}</span>
 				{/if}
 				<span class="text-faint small">{hw.status_label}</span>
+				{#if cost > 0}
+					<span class="due-chip cost" title={mode === 'resubmit'
+						? 'Запит на перездачу коштує монети'
+						: 'Дедлайн давно минув — здача коштує монети'}><Coins size={12} /> −{cost}</span>
+				{/if}
 			</div>
 		</div>
 
@@ -422,7 +434,7 @@
 						{#if sending}
 							<span class="mini-spin"></span> Надсилаємо…
 						{:else}
-							<Send size={16} /> {mode === 'resubmit' ? 'Перездати' : provider === 'm1' && m1Source === 'url' ? 'Надіслати посилання' : 'Здати'}
+							<Send size={16} /> {mode === 'resubmit' ? 'Перездати' : provider === 'm1' && m1Source === 'url' ? 'Надіслати посилання' : 'Здати'}{#if cost > 0}<span class="send-cost">−{cost} <Coins size={13} /></span>{/if}
 						{/if}
 					</span>
 				{/key}
@@ -509,6 +521,23 @@
 		font-size: 14.5px;
 	}
 
+	.due-chip.cost {
+		display: inline-flex;
+		align-items: center;
+		gap: 3px;
+		color: var(--amber, #ffb454);
+	}
+	.send-cost {
+		display: inline-flex;
+		align-items: center;
+		gap: 3px;
+		margin-left: 8px;
+		padding: 1px 7px;
+		border-radius: 999px;
+		font-size: 12px;
+		font-weight: 600;
+		background: rgb(0 0 0 / 0.18);
+	}
 	.brief-chips {
 		display: flex;
 		align-items: center;
@@ -914,11 +943,23 @@
 	:global(html[data-anim='off']) :is(.ok-c, .ok-p) { stroke-dashoffset: 0; }
 	:global(html[data-anim='off']) .drop.dragging { transform: none; }
 
+	/* Де є нижня панель (≤900px): вікно живе у вільній зоні НАД нею — центр і
+	 * висота рахуються без --nav-total, тож кнопка «Здати» не опиняється під
+	 * панеллю, а внутрішній скрол доходить до самого низу. */
+	@media (max-width: 900px) {
+		.dlg {
+			top: calc((100dvh - var(--nav-total, 0px)) / 2);
+			max-height: calc(100dvh - var(--nav-total, 0px) - 24px);
+			overscroll-behavior: contain;
+			-webkit-overflow-scrolling: touch;
+		}
+	}
+
 	@media (max-width: 560px) {
 		.dlg {
-			/* на телефоні — по центру, як на ПК */
+			/* на телефоні — по центру вільної зони */
 			width: min(520px, calc(100vw - 24px));
-			max-height: calc(100dvh - 40px);
+			max-height: calc(100dvh - var(--nav-total, 0px) - 20px);
 			padding: 16px;
 		}
 

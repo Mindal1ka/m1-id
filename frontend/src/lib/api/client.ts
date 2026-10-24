@@ -157,9 +157,16 @@ export interface HwItem {
 	attachment: boolean;
 	answer: boolean;
 	is_test: boolean;
+	/** есе (is_autotest = 2): відповідь лише текстом */
+	is_essay?: boolean;
+	/** тип ДЗ англійським ключем: essay | test | independent_work | practice_work | type_N */
+	kind?: string;
 	is_retake: boolean;
 	overdue_days: number;
+	/** монет за здачу давно простроченого ДЗ (−20), 0 якщо безкоштовно */
 	late_penalty: number;
+	/** монет за запит на перездачу виконаного ДЗ (−2) */
+	retake_cost?: number;
 }
 
 /** Повна картка ДЗ (модалка деталей) — наш формат з homework_card_view. */
@@ -181,7 +188,11 @@ export interface HwCard {
 	answer_files: string[];
 	submitted_at: string | null;
 	coins: number | null;
+	late_penalty?: number;
+	retake_cost?: number;
 	is_test: boolean;
+	is_essay?: boolean;
+	kind?: string;
 	autotest_status: number | null;
 	autotest_result: string | null;
 	teacher_comment: string;
@@ -202,6 +213,8 @@ export interface Lesson {
 	teacher: string;
 	room: string;
 	mark: number | null;
+	/** ±19 у MyStat — «не допущено до екзамену» (показуємо «н/д») */
+	not_allowed?: boolean;
 	attendance: string | number | null;
 	was: number | null;
 	was_type: number | null;

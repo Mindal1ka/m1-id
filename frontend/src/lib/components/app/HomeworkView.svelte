@@ -1,16 +1,18 @@
 <script lang="ts">
 	import { tick } from 'svelte';
 	import { AnimatedNumber, stagger, pressable } from '$lib/motion';
-	import { Link2, UserRound } from '@lucide/svelte';
+	import { ArrowUpDown, BookOpen, Link2, Shapes, UserRound } from '@lucide/svelte';
+	import { Dropdown } from '$lib/ui';
 	import type { HomeworkView as HwView, HwItem } from '$lib/api/client';
 	import { MONTHS_UK } from '$lib/sections';
-	import { fmtDate, mkCls, cleanTeacher } from '$lib/app/helpers';
+	import { fmtDate, mkCls, cleanTeacher, hwKindLabel, hwKindTag } from '$lib/app/helpers';
 
 	interface Props {
 		hw: HwView | null;
 		/** Вкладка зараз вантажиться (скелет/«Завантаження…»). */
 		busy: boolean;
-		hwType: 'all' | 'tasks' | 'tests';
+		/** 'all' або ключ типу (essay, test, practice_work, …) */
+		hwType: string;
 		hwSubject: string;
 		hwStatus: 'all' | '3' | '2' | '1';
 		hwSort: 'deadline_asc' | 'deadline_desc' | 'new' | 'old';
@@ -59,13 +61,30 @@
 	 *  (revalidate) його не міняє → вхідна хореографія не програється вдруге. */
 	const viewKey = $derived(`${hwType}|${hwSubject}|${hwStatus}|${hwSort}`);
 
+	const SORTS = [
+		{ value: 'deadline_asc', label: 'Дедлайн', hint: 'спочатку ближчі' },
+		{ value: 'deadline_desc', label: 'Дедлайн', hint: 'спочатку далекі' },
+		{ value: 'new', label: 'Створення', hint: 'спочатку нові' },
+		{ value: 'old', label: 'Створення', hint: 'спочатку старі' }
+	];
+
+	/** Типи, що реально є в даних (порядок появи): фільтр будується з них,
+	 *  тож новий тип від MyStat з'являється сам. */
+	const kinds = $derived.by(() => {
+		const seen: string[] = [];
+		for (const h of hw?.items ?? []) {
+			const k = h.kind ?? 'independent_work';
+			if (!seen.includes(k)) seen.push(k);
+		}
+		return seen;
+	});
+
 	/** Число завдань у фільтрі (для AnimatedNumber). */
 	const shownCount = $derived(visibleHw().length);
 
 	function visibleHw() {
 		let list = hw?.items ?? [];
-		if (hwType === 'tests') list = list.filter((h) => h.is_test);
-		else if (hwType === 'tasks') list = list.filter((h) => !h.is_test);
+		if (hwType !== 'all') list = list.filter((h) => (h.kind ?? 'independent_work') === hwType);
 		if (hwSubject !== 'all') list = list.filter((h) => h.subject === hwSubject);
 		if (hwStatus !== 'all') list = list.filter((h) => String(h.status) === hwStatus);
 		if (hwSort === 'deadline_desc') {
@@ -124,23 +143,37 @@
 						</button>
 					</div>
 					<div class="hw-toolbar">
-						<select bind:value={hwType} title="Тип завдання">
-							<option value="all">Всі типи</option>
-							<option value="tasks">Завдання</option>
-							<option value="tests">Тести</option>
-						</select>
-						<select bind:value={hwSubject} title="Предмет">
-							<option value="all">Всі предмети</option>
-							{#each hw?.subjects ?? [] as s (s)}
-								<option value={s}>{s}</option>
-							{/each}
-						</select>
-						<select bind:value={hwSort} title="Сортування">
-							<option value="deadline_asc">Дедлайн: спочатку ближчі</option>
-							<option value="deadline_desc">Дедлайн: спочатку далекі</option>
-							<option value="new">Створення: спочатку нові</option>
-							<option value="old">Створення: спочатку старі</option>
-						</select>
+						<Dropdown
+							label="Тип"
+							icon={Shapes}
+							value={hwType}
+							resetValue="all"
+							options={[
+								{ value: 'all', label: 'Всі типи', short: 'Всі' },
+								...kinds.map((k) => ({ value: k, label: hwKindLabel(k) }))
+							]}
+							onchange={(v) => (hwType = v)}
+						/>
+						<Dropdown
+							label="Предмет"
+							icon={BookOpen}
+							value={hwSubject}
+							resetValue="all"
+							options={[
+								{ value: 'all', label: 'Всі предмети', short: 'Всі' },
+								...(hw?.subjects ?? []).map((s) => ({ value: s, label: s }))
+							]}
+							onchange={(v) => (hwSubject = v)}
+						/>
+						<Dropdown
+							label="Сортування"
+							icon={ArrowUpDown}
+							value={hwSort}
+							resetValue="deadline_asc"
+							searchable={false}
+							options={SORTS}
+							onchange={(v) => (hwSort = v as typeof hwSort)}
+						/>
 						<span class="hw-total text-faint small">
 							Завдань: <AnimatedNumber value={shownCount} duration={500} />{#if hw && shownCount !== hw.total}
 								{' / '}<AnimatedNumber value={hw.total} duration={500} />{/if}</span>
@@ -173,7 +206,7 @@
 										{/if}
 									</div>
 									<span class="hw-t-subj text-dim small">
-										{h.subject}{#if h.is_test} · тест{/if}{#if h.is_retake} · ретейк{/if}</span>
+										{h.subject}{#if hwKindTag(h.kind)} · {hwKindTag(h.kind).toLowerCase()}{/if}{#if h.is_retake} · ретейк{/if}</span>
 									<div class="hw-t-foot">
 										{#if h.overdue_days}
 											<span class="due-chip late pulse">Прострочено: {h.overdue_days} дн.</span>
@@ -206,17 +239,6 @@
 <style>
 
 	/* ── меню профілю: поповер над кнопкою ── */
-
-	select {
-		font: inherit;
-		font-size: 13.5px;
-		color: var(--text);
-		background: var(--surface);
-		border: 1px solid var(--glass-border);
-		border-radius: var(--radius-sm);
-		padding: 8px 10px;
-		max-width: 200px;
-	}
 
 	/* ================= сітка дашборду ================= */
 
@@ -351,23 +373,12 @@
 		margin-bottom: 14px;
 	}
 
-	.hw-toolbar select {
-		background: var(--surface-2);
-		color: var(--text);
-		border: 1px solid var(--glass-border);
-		border-radius: var(--radius-md);
-		padding: 9px 12px;
-		font: inherit;
-		font-size: 13.5px;
-		cursor: pointer;
-		max-width: 250px;
-		transition: border-color 0.15s ease;
+	/* Dropdown (UI-кіт) живе в обгортці Popover `.trigger` — розтягуємо її, не кнопку */
+	.hw-toolbar :global(.trigger) {
+		min-width: 0;
 	}
-
-	.hw-toolbar select:hover,
-	.hw-toolbar select:focus {
-		border-color: var(--accent);
-		outline: none;
+	.hw-toolbar :global(.dd-btn) {
+		width: 100%;
 	}
 
 	.hw-total {
@@ -512,8 +523,14 @@
 	}
 
 	@media (max-width: 900px) {
-		.hw-toolbar select {
-			flex: 1 1 44%;
+		/* на телефоні: два фільтри в рядок, сортування — на всю ширину */
+		.hw-toolbar :global(.trigger) {
+			flex: 1 1 calc(50% - 5px);
+		}
+		.hw-toolbar :global(.trigger:last-of-type) {
+			flex-basis: 100%;
+		}
+		.hw-toolbar :global(.dd-val) {
 			max-width: none;
 		}
 
