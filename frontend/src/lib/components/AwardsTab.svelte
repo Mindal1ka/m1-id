@@ -7,10 +7,12 @@
 	let {
 		account_id,
 		/** Тик «Оновити» з +page: змінився → перечитуємо з force=true. */
-		refreshTick = 0
+		refreshTick = 0,
+		dataTick = 0
 	}: {
 		account_id: number;
 		refreshTick?: number;
+		dataTick?: number;
 	} = $props();
 
 	let data = $state<AwardsView | null>(null);
@@ -38,6 +40,13 @@
 
 	$effect(() => {
 		if (refreshTick > 0) void load(true);
+	});
+	// Фонове оновлення за TTL бекенда (тик +page кожні 5 хв): без скелета,
+	// бекенд сам вирішує, чи ходити в mapi. Помилка — мовчки, лишаються старі дані.
+	$effect(() => {
+		if (dataTick > 0) {
+			void api.awards(account_id, false).then((v) => (data = v)).catch(() => {});
+		}
 	});
 
 	// елементи карток за id — для пружинного «поп» після покупки

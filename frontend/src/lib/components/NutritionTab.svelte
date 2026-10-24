@@ -1008,7 +1008,9 @@
 		bottom: 16px;
 		width: min(680px, calc(100vw - 24px));
 		z-index: 45;
-		background: var(--bg-a95, rgba(11,14,20,0.95));
+		/* --bg-a95 ніде не оголошено → завжди спрацьовував ТЕМНИЙ фолбек, навіть
+		   у світлій темі; тепер фон береться від поточного --bg */
+		background: color-mix(in srgb, var(--bg) 95%, transparent);
 		-webkit-backdrop-filter: blur(calc(14px + 0px));
 		backdrop-filter: blur(14px);
 		border: 1px solid var(--glass-border);
@@ -1020,9 +1022,12 @@
 		-webkit-backdrop-filter: none; backdrop-filter: none;
 		background: var(--bg);
 	}
+	:global(html[data-scheme='light']) .cartbar {
+		box-shadow: 0 10px 30px rgba(20, 24, 40, .16);
+	}
 	@media (max-width: 900px) {
 		.cartbar {
-			bottom: calc(78px + env(safe-area-inset-bottom, 0px) + 8px);
+			bottom: calc(var(--nav-total, 78px) + 8px);
 			width: calc(100vw - 20px);
 		}
 	}

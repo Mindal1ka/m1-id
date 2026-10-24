@@ -529,6 +529,58 @@ async def homework_card(db, account: MystatAccount, homework_id: int) -> dict:
     return card
 
 
+LATE_PENALTY_COINS = 20      # ціна здачі «архівного» ДЗ (як у офіційному клієнті)
+LATE_PENALTY_DAYS = 183      # дедлайн раніше за стільки днів → платна здача
+RETAKE_COST_COINS = 2        # ціна запиту на перездачу виконаного ДЗ
+
+
+def _late_penalty(due_raw: Any, unlock_expire: Any,
+                  limit_days: Any = None, coins: Any = None) -> int:
+    """Штраф за здачу ДЗ із давно минулим дедлайном — правило офіційного
+    клієнта (chunk D06T): `diff(дедлайн, зараз, днів) < -182`, не відкрито
+    перездачу і `homework_stud.unlock_expire !== "1"` → кнопка «Надіслати −20».
+    Параметри віддає сам mapi у кожному ДЗ (перевірено live): ліміт днів —
+    `default_deadline_days` (182), ціна — `coins_to_close_deadline` (20);
+    за їх відсутності діють константи. Рахуємо за ДЕДЛАЙНОМ (overdue_time),
+    а не за датою створення."""
+    if str(unlock_expire) == "1" or not due_raw:
+        return 0
+    try:
+        d_due = date.fromisoformat(str(due_raw)[:10])
+    except ValueError:
+        return 0
+    try:
+        days = int(limit_days) + 1 if limit_days not in (None, "") else LATE_PENALTY_DAYS
+    except (TypeError, ValueError):
+        days = LATE_PENALTY_DAYS
+    try:
+        cost = int(coins) if coins not in (None, "") else LATE_PENALTY_COINS
+    except (TypeError, ValueError):
+        cost = LATE_PENALTY_COINS
+    return cost if (_kyiv_today() - d_due).days >= days else 0
+
+
+def _autotest_kind(x: dict) -> str:
+    """`is_autotest` у mapi: 0 — звичайне ДЗ, 2 — ЕСЕ (перевірено live: усі
+    есе мають 2 і відповідь текстом у homework_stud.stud_answer), інше
+    ненульове — автотест (значень ≠ 0/2 в живих даних ще не бачили ⚠️)."""
+    raw = str(x.get("is_autotest") if x.get("is_autotest") is not None else 0)
+    if raw in ("", "0", "False", "false"):
+        return "homework"
+    return "essay" if raw == "2" else "test"
+
+
+def _hw_kind(x: dict) -> str:
+    """Англомовний ключ типу ДЗ (як у офіційному клієнті, getTypeLabel):
+    essay | test | independent_work (ospr 0) | practice_work (ospr 1).
+    Невідомий ospr → `type_<ospr>`: фронт покаже ключ як є (англійською)."""
+    kind = _autotest_kind(x)
+    if kind in ("essay", "test"):
+        return kind
+    raw = str(x.get("ospr") if x.get("ospr") is not None else 0).strip()
+    return {"0": "independent_work", "1": "practice_work"}.get(raw, f"type_{raw}")
+
+
 def homework_card_view(c: dict) -> dict:
     """Сира картка mapi → наш чистий формат для модалки деталей."""
     stud = c.get("homework_stud") or {}
@@ -569,7 +621,16 @@ def homework_card_view(c: dict) -> dict:
         "submitted_at": stud.get("creation_time") or None,
         "submission_id": stud.get("id"),
         "coins": c.get("coins_to_close_deadline"),
-        "is_test": bool(c.get("is_autotest")),
+        # ціна здачі: −20 для давно простроченого, −2 за перездачу виконаного
+        "late_penalty": (_late_penalty(c.get("overdue_time"),
+                                       stud.get("unlock_expire"),
+                                       c.get("default_deadline_days"),
+                                       c.get("coins_to_close_deadline"))
+                         if st == 3 else 0),
+        "retake_cost": RETAKE_COST_COINS,
+        "kind": _hw_kind(c),
+        "is_test": _autotest_kind(c) == "test",
+        "is_essay": _autotest_kind(c) == "essay",
         "autotest_status": c.get("autotest_status"),
         "autotest_result": c.get("autotest_result"),
         "teacher_comment": hwc.get("text_comment") or "",
@@ -604,24 +665,11 @@ def norm_homework(x: dict, group_status: int | None = None) -> dict:
             d_due = date.fromisoformat(str(due_raw)[:10])
             if d_due < _kyiv_today():
                 overdue = max(overdue, (_kyiv_today() - d_due).days)
-                # Штраф за пізню здачу стосується лише СВІЖИХ завдань —
-                # останні ~півроку (183 дні). Стара архівна домашка
-                # здається безкоштовно, як і показує офіційний GUI.
-                c_raw = str(x.get("creation_time") or "")[:10]
-                try:
-                    c_date = date.fromisoformat(c_raw)
-                    age_days = (_kyiv_today() - c_date).days
-                except ValueError:
-                    age_days = None
-                if age_days is not None and age_days <= 183:
-                    # 0 — валідний штраф («без штрафу»): `or 20` перетворював
-                    # чесний нуль у дефолтні 20 монет
-                    try:
-                        late_penalty = int(x.get("coins_to_close_deadline"))
-                    except (TypeError, ValueError):
-                        late_penalty = 20
         except ValueError:
             pass
+        late_penalty = _late_penalty(
+            due_raw, stud.get("unlock_expire"),
+            x.get("default_deadline_days"), x.get("coins_to_close_deadline"))
     # здані роботи (на перевірці / виконано) простроченими бути не можуть —
     # вони здані; «прострочено» чесно лише для «до виконання» і ретейка
     if status in (1, 2):
@@ -638,10 +686,13 @@ def norm_homework(x: dict, group_status: int | None = None) -> dict:
         "mark": stud.get("mark"),
         "attachment": bool(x.get("file_path")),
         "answer": bool(stud.get("file_path") or stud.get("stud_answer")),
-        "is_test": bool(x.get("is_autotest")),
-        "is_retake": bool(x.get("is_retake")),
+        "kind": _hw_kind(x),
+        "is_test": _autotest_kind(x) == "test",
+        "is_essay": _autotest_kind(x) == "essay",
+        "is_retake": str(stud.get("is_retake")) == "1",
         "overdue_days": int(overdue),
         "late_penalty": int(late_penalty),
+        "retake_cost": RETAKE_COST_COINS,
     }
 
 
@@ -850,8 +901,21 @@ def schedule_view(payloads: dict[str, Any], section: str) -> dict:
 _WEEKDAYS_UK = ["", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"]
 
 
+def _split_special_mark(raw: Any) -> tuple[Any, bool]:
+    """Службові значення поля mark (офіційний клієнт, calendar-panel):
+    ±19 — «не допущено» (н/д), ±20 — екзамен без оцінки (порожньо).
+    Повертає (оцінка для показу | None, не_допущено)."""
+    key = str(raw).strip() if raw is not None else ""
+    if key in ("19", "-19"):
+        return None, True
+    if key in ("20", "-20"):
+        return None, False
+    return raw, False
+
+
 def norm_lesson(l: dict) -> dict:
     wd = str(l.get("week_day") or "")
+    mark_shown, not_allowed = _split_special_mark(l.get("mark"))
     return {
         "date": l.get("date") or "",
         "weekday": _WEEKDAYS_UK[int(wd)] if (wd.isascii() and wd.isdigit()) and 1 <= int(wd) <= 7 else wd,
@@ -862,7 +926,8 @@ def norm_lesson(l: dict) -> dict:
         "theme": l.get("lesson_theme") or "",
         "teacher": l.get("teacher_name") or "",
         "room": l.get("room_name") or "",
-        "mark": l.get("mark"),
+        "mark": mark_shown,
+        "not_allowed": not_allowed,
         "attendance": l.get("attendance"),
         "was": l.get("was"),
         "was_type": l.get("was_type"),
@@ -886,8 +951,8 @@ def marks_view(payloads: dict[str, Any]) -> dict:
     а не лише навчальний рік. Fallback — stat_marks (period=month).
 
     type_work тут має ті самі id, що й mark_type уроків розкладу
-    (перевірено крос-звіркою спільних дат): 1 урок, 2 екзамен,
-    3 самостійна, 4 лекція, 5 практична, 6 лабораторна, 7 контрольна.
+    (енам MyStat): 0 тестування, 1 курсова, 2 екзамен, 3 самостійна,
+    4 практична, 5 класна, 6 контрольна, 7 тематична.
     """
     raw = payloads.get("stat_marks_year")
     if not isinstance(raw, list) or not raw:

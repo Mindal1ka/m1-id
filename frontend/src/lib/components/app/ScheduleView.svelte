@@ -251,6 +251,8 @@
 												{#if l.mark != null}
 													<span class="mk2 {mkCls(l.mark)}"
 														class:ex={!!l.exam}>{l.mark}</span>
+												{:else if l.not_allowed}
+													<span class="nk" title="Не допущено">н/д</span>
 												{/if}
 											</div>
 										{/each}
@@ -283,9 +285,11 @@
 														<span class="ex-tag">Екзамен</span>
 													{/if}
 												</div>
-												{#if l.mark != null || l.was === 0}
+												{#if l.mark != null || l.was === 0 || l.not_allowed}
 													<div class="wbadges">
-														{#if l.was === 0}
+														{#if l.not_allowed}
+															<span class="nk pop-badge" style:--ci={ci} title="Не допущено">н/д</span>
+														{:else if l.was === 0}
 															<span class="nk pop-badge" style:--ci={ci} title="Не був">Н</span>
 														{/if}
 														{#if l.mark != null}
@@ -346,7 +350,9 @@
 											{/if}
 											<span class="text-faint small">{l.room}</span>
 											<span class="les-time"><b>{l.start}</b><i>&ndash;{l.end}</i></span>
-											{#if l.was === 0}
+											{#if l.not_allowed}
+												<span class="nk" title="Не допущено">н/д</span>
+											{:else if l.was === 0}
 												<span class="nk" title="Не був">Н</span>
 											{/if}
 											{#if l.mark != null}

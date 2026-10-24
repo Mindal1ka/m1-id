@@ -6,10 +6,12 @@
 
 	let {
 		account_id,
-		refreshTick = 0
+		refreshTick = 0,
+		dataTick = 0
 	}: {
 		account_id: number;
 		refreshTick?: number;
+		dataTick?: number;
 	} = $props();
 
 	let data = $state<ProgressView | null>(null);
@@ -32,6 +34,13 @@
 
 	$effect(() => {
 		if (refreshTick > 0) void load(true);
+	});
+	// Фонове оновлення за TTL бекенда (тик +page кожні 5 хв): без скелета,
+	// бекенд сам вирішує, чи ходити в mapi. Помилка — мовчки, лишаються старі дані.
+	$effect(() => {
+		if (dataTick > 0) {
+			void api.progress(account_id, false).then((v) => (data = v)).catch(() => {});
+		}
 	});
 
 	/** Висота стовпчика 0..1 відносно максимуму шкали (12 балів). */

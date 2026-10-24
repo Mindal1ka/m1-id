@@ -46,15 +46,38 @@ export const BALANCE_ICONS: Record<string, typeof Coins> = {
 
 export const WD_UK = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
 
+// Енам типів робіт MyStat (mark_type / type_work), як у MarksChipsCard:
+// testing=0 · coursework=1 · exam=2 · home_work=3 · practice=4 ·
+// classwork=5 · control_work=6 · thematic_work=7
 const MARK_LABELS: Record<number, string> = {
-	1: 'Оцінка за урок',
+	0: 'Оцінка за тестування',
+	1: 'Оцінка за курсову роботу',
 	2: 'Оцінка за екзамен',
 	3: 'Оцінка за самостійну роботу',
-	4: 'Оцінка за лекцію',
-	5: 'Оцінка за практичну роботу',
-	6: 'Оцінка за лабораторну роботу',
-	7: 'Оцінка за контрольну роботу'
+	4: 'Оцінка за практичну роботу',
+	5: 'Оцінка за класну роботу',
+	6: 'Оцінка за контрольну роботу',
+	7: 'Оцінка за тематичну роботу'
 };
+
+/** Типи ДЗ (`kind` з бекенду). Невідомий тип показуємо його англійським
+ *  ключем як є — нове значення від MyStat не лишається без підпису. */
+const HW_KIND_LABEL: Record<string, string> = {
+	independent_work: 'Самостійна',
+	practice_work: 'Практична',
+	essay: 'Есе',
+	test: 'Тест'
+};
+
+export function hwKindLabel(kind: string | null | undefined): string {
+	if (!kind) return '';
+	return HW_KIND_LABEL[kind] ?? kind;
+}
+
+/** Мітка типу в рядку/чипі: для «звичайної» самостійної не шумимо. */
+export function hwKindTag(kind: string | null | undefined): string {
+	return !kind || kind === 'independent_work' ? '' : hwKindLabel(kind);
+}
 
 /** Понеділок тижня заданої дати (локальний час). */
 export function mondayOf(d: Date): Date {
@@ -73,7 +96,8 @@ export function mkCls(m: number | string | null): string {
 
 export function markLabel(l: SchedLesson): string {
 	if (l.exam) return 'Оцінка за екзамен';
-	return MARK_LABELS[l.mark_type ?? 0] ?? 'Оцінка';
+	if (l.mark_type == null) return 'Оцінка';
+	return MARK_LABELS[l.mark_type] ?? 'Оцінка';
 }
 
 export function wasLabel(l: SchedLesson): string {

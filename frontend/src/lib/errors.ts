@@ -18,6 +18,7 @@ const MAP: Record<string, string> = {
 	account_needs_relogin: 'Потрібно повторно увійти в MyStat.',
 	mystat_invalid_credentials: 'Невірний логін або пароль MyStat.',
 	mystat_unavailable: 'MyStat тимчасово недоступний. Спробуйте пізніше.',
+	relative_not_supported: 'Батьківські акаунти MyStat поки не підтримуються. Увійдіть акаунтом студента.',
 	sync_already_running: 'Синхронізація вже виконується.',
 	snapshot_not_found: 'Даних за цей період ще немає.',
 	account_not_found: 'Акаунт не знайдено.',

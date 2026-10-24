@@ -268,7 +268,7 @@
 	);
 	let otherOpen = $state(false);
 	const isOther = $derived(OTHER_TABS.some((t) => t.key === tab));
-	let hwType = $state<'all' | 'tasks' | 'tests'>('all');
+	let hwType = $state<string>('all');
 	let hwSubject = $state<string>('all');
 	let hwStatus = $state<'all' | '3' | '2' | '1'>('all');
 	let hwSort = $state<'deadline_asc' | 'deadline_desc' | 'new' | 'old'>(
@@ -1332,6 +1332,13 @@
 		});
 	}
 
+	// Модалка відкрита → нижню панель примусово показуємо (модалки над нею
+	// рахують висоту з урахуванням --nav-total, див. SubmitModal/HomeworkDetailsModal).
+	const modalOpen = $derived(
+		submitOpen || detailsOpen || newsOpen || qrOpen || profileOpen ||
+			settingsOpen || sessionsOpen || m1AllOpen
+	);
+
 	// Автоховання нижньої панелі: вниз > 12px — ховаємо, вгору / верх / низ списку — показуємо.
 	let navHidden = $state(false);
 	let navLastTop = 0;
@@ -1518,19 +1525,19 @@
 				{:else if tab === 'nutrition'}
 					{@render tabPage(() => import('$lib/components/NutritionTab.svelte'), { refreshTick: uiTick })}
 				{:else if tab === 'payments'}
-					{@render tabPage(() => import('$lib/components/PaymentsTab.svelte'), { account_id: activeId ?? 0, refreshTick: uiTick })}
+					{@render tabPage(() => import('$lib/components/PaymentsTab.svelte'), { account_id: activeId ?? 0, refreshTick: uiTick, dataTick })}
 				{:else if tab === 'clubs'}
-					{@render tabPage(() => import('$lib/components/ClubsTab.svelte'), { account_id: activeId ?? 0, refreshTick: uiTick })}
+					{@render tabPage(() => import('$lib/components/ClubsTab.svelte'), { account_id: activeId ?? 0, refreshTick: uiTick, dataTick })}
 				{:else if tab === 'contacts'}
 					{@render tabPage(() => import('$lib/components/ContactsTab.svelte'), { account_id: activeId ?? 0, refreshTick: uiTick, dataTick })}
 				{:else if tab === 'notes'}
 					{@render tabPage(() => import('$lib/components/NotesTab.svelte'), { account_id: activeId ?? 0 })}
 				{:else if tab === 'board'}
-					{@render tabPage(() => import('$lib/components/LeaderTab.svelte'), { account_id: activeId ?? 0, refreshTick: uiTick, my_fio: dash?.user?.fio ?? null })}
+					{@render tabPage(() => import('$lib/components/LeaderTab.svelte'), { account_id: activeId ?? 0, refreshTick: uiTick, dataTick, my_fio: dash?.user?.fio ?? null })}
 				{:else if tab === 'awards'}
-					{@render tabPage(() => import('$lib/components/AwardsTab.svelte'), { account_id: activeId ?? 0, refreshTick: uiTick })}
+					{@render tabPage(() => import('$lib/components/AwardsTab.svelte'), { account_id: activeId ?? 0, refreshTick: uiTick, dataTick })}
 				{:else if tab === 'progress'}
-					{@render tabPage(() => import('$lib/components/ProgressTab.svelte'), { account_id: activeId ?? 0, refreshTick: uiTick })}
+					{@render tabPage(() => import('$lib/components/ProgressTab.svelte'), { account_id: activeId ?? 0, refreshTick: uiTick, dataTick })}
 				{:else if tab === 'telegram'}
 					{@render tabPage(() => import('$lib/components/TelegramPanel.svelte'), { active: tab === 'telegram' })}
 				{:else if tab === 'plugins'}
@@ -1560,6 +1567,7 @@
 			onother={() => (otherOpen = !otherOpen)}
 			hidden={navHidden}
 			{otherOpen}
+			forceShow={modalOpen}
 		/>
 
 		<ProfileMenu

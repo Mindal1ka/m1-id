@@ -16,6 +16,8 @@
 		hidden?: boolean;
 		/** Відкрите меню «Інше»: панель ніколи не ховаємо (необов'язково). */
 		otherOpen?: boolean;
+		/** Відкрита модалка: панель примусово показуємо (необов'язково). */
+		forceShow?: boolean;
 	}
 	let {
 		tabs,
@@ -26,7 +28,8 @@
 		onopen,
 		onother,
 		hidden = false,
-		otherOpen = false
+		otherOpen = false,
+		forceShow = false
 	}: Props = $props();
 
 	// На телефоні рендеримо лише те, що показуємо: основні вкладки + Інше + Профіль.
@@ -220,7 +223,11 @@
 		reveal = false;
 	});
 
-	const away = $derived(kbd || typing || (hidden && !reveal && !menuOpen && !otherOpen));
+	// forceShow: поки відкрита модалка — панель завжди видно (модалки рахують
+	// висоту з урахуванням --nav-total, тож кнопки внизу лишаються досяжними).
+	const away = $derived(
+		kbd || typing || (hidden && !reveal && !menuOpen && !otherOpen && !forceShow)
+	);
 </script>
 
 <nav
@@ -284,8 +291,10 @@
 	</button>
 </nav>
 
+
 <style>
-	/* Спільні розміри плаваючої панелі: використовує й +page (padding контенту) і меню. */
+	/* Спільні розміри плаваючої панелі: використовує й +page (padding контенту),
+	 * меню та модалки (висота над панеллю). */
 	:global(:root) {
 		--nav-bar-h: 62px;
 		--nav-gap: max(var(--space-3), calc(var(--safe-bottom) * 0.6));

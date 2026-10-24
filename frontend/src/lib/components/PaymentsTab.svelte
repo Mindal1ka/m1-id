@@ -10,10 +10,12 @@
 	let {
 		account_id,
 		/** Тик «Оновити» з +page: змінився → перечитуємо з force=true. */
-		refreshTick = 0
+		refreshTick = 0,
+		dataTick = 0
 	}: {
 		account_id: number;
 		refreshTick?: number;
+		dataTick?: number;
 	} = $props();
 
 	let data = $state<PaymentsView | null>(null);
@@ -37,6 +39,13 @@
 	// «Оновити» в топбарі: тик змінився → форс-перечитування (мимо кеша).
 	$effect(() => {
 		if (refreshTick > 0) void load(true);
+	});
+	// Фонове оновлення за TTL бекенда (тик +page кожні 5 хв): без скелета,
+	// бекенд сам вирішує, чи ходити в mapi. Помилка — мовчки, лишаються старі дані.
+	$effect(() => {
+		if (dataTick > 0) {
+			void api.payments(account_id, false).then((v) => (data = v)).catch(() => {});
+		}
 	});
 
 	const money = new Intl.NumberFormat('uk-UA', {

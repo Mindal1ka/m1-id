@@ -61,6 +61,11 @@
 						<span class="mk2 {mkCls(l.mark)}" class:ex={!!l.exam}>{l.mark}</span>
 						<span>{markLabel(l)}</span>
 					</div>
+				{:else if l.not_allowed}
+					<div class="lc-mark">
+						<span class="mk2 low">н/д</span>
+						<span>Не допущено</span>
+					</div>
 				{/if}
 				{#if l.homeworks?.length}
 					<div class="lc-sect">Завдання до виконання</div>
